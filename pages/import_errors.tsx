@@ -10,6 +10,7 @@ export default function ImportErrorsPage() {
   const [detailModalVisible, setDetailModalVisible] = useState(false)
   const [selectedError, setSelectedError] = useState<ImportError | null>(null)
   const [confirmModalVisible, setConfirmModalVisible] = useState(false)
+  const [pageSize, setPageSize] = useState(10)
 
   useEffect(() => {
     fetchErrors()
@@ -97,7 +98,7 @@ export default function ImportErrorsPage() {
       dataIndex: 'row_number',
       key: 'row_number',
       width: 80,
-      align: 'center'
+      align: 'center' as const
     },
     {
       title: '错误信息',
@@ -168,7 +169,16 @@ export default function ImportErrorsPage() {
             dataSource={errors}
             rowKey="id"
             loading={loading}
-            pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+            pagination={{ 
+              pageSize: pageSize, 
+              showSizeChanger: true, 
+              showTotal: (total) => `共 ${total} 条`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => {
+                setPageSize(size)
+                fetchErrors()
+              }
+            }}
           />
         </Card>
       </div>

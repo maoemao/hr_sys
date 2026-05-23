@@ -15,6 +15,7 @@ export default function EntryListPage() {
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [editingRecord, setEditingRecord] = useState<EntryList | null>(null)
   const [deduplicateModalVisible, setDeduplicateModalVisible] = useState(false)
+  const [pageSize, setPageSize] = useState(10)
 
   const searchFormRef = useRef<any>(null)
 
@@ -298,7 +299,16 @@ export default function EntryListPage() {
             rowKey="id"
             loading={loading}
             scroll={{ x: 1200 }}
-            pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+            pagination={{ 
+              pageSize: pageSize, 
+              showSizeChanger: true, 
+              showTotal: (total) => `共 ${total} 条`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => {
+                setPageSize(size)
+                fetchData()
+              }
+            }}
           />
         </Card>
       </div>
