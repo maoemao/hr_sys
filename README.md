@@ -4,19 +4,42 @@
 
 ## 功能特性
 
-- 入职名单管理（增删改查）
-- Excel 文件导入/导出
-- 数据去重
-- 导入错误日志记录
-- 数据搜索（按姓名、电话、身份证号码）
-- 分页功能（可自定义每页条数）
+- 🔐 **用户认证**
+  - 用户登录（邮箱/密码）
+  - 退出登录
+  - JWT + Refresh Token 认证机制
+  - 初始密码检测与强制修改
+  - 重置密码功能
+
+- 📋 **入职名单管理**
+  - 入职名单管理（增删改查）
+  - Excel 文件导入/导出
+  - 数据去重
+  - 导入错误日志记录
+  - 数据搜索（按姓名、电话、身份证号码）
+  - 分页功能（可自定义每页条数）
+
+- 👥 **权限管理**（仅超级管理员可见）
+  - 用户列表展示
+  - 创建新用户
+  - 编辑用户角色
+  - 删除用户
+  - 重置用户密码
+
+- 🔒 **角色权限体系**
+  - **超级管理员**：可管理所有用户、导出数据
+  - **管理员**：可查看名单、导入数据
+  - **普通用户**：仅可查看名单
 
 ## 技术栈
 
 | 层次 | 技术 | 说明 |
 |------|------|------|
-| 前端框架 | Next.js + React | 页面渲染和用户交互 |
+| 前端框架 | Next.js 16 + React 19 | 页面渲染和用户交互 |
 | UI组件库 | Ant Design 5 | 表格、表单、弹框等组件 |
+| 状态管理 | Zustand | 轻量级状态管理 |
+| 数据请求 | Axios + TanStack Query | HTTP 请求和缓存 |
+| 认证机制 | JWT + Refresh Token | 用户认证 |
 | 后端框架 | Next.js API Routes | 同一个项目内置后端API |
 | 数据库 | SQLite (better-sqlite3) | 轻量级本地数据库 |
 | 语言 | TypeScript | 类型安全 |
@@ -54,164 +77,144 @@ npm start
 hr_sys/
 ├── components/        # 公共组件
 │   ├── Layout.tsx     # 布局组件
-│   └── Sidebar.tsx    # 侧边栏导航
+│   └── Sidebar.tsx    # 侧边栏导航（显示当前用户信息）
 ├── lib/               # 工具库
-│   └── db.ts          # 数据库配置
+│   ├── db.ts          # 数据库配置
+│   ├── axios.ts       # Axios 配置
+│   └── queryClient.ts # TanStack Query 配置
+├── store/             # 状态管理
+│   └── authStore.ts   # 认证状态管理
 ├── pages/             # 页面和API路由
 │   ├── api/           # API 接口
-│   │   ├── entry_list/    # 入职名单相关API
-│   │   │   ├── deduplicate.ts  # 数据去重
-│   │   │   ├── export.ts      # Excel导出
-│   │   │   ├── import.ts      # Excel导入
-│   │   │   └── template.ts    # 导入模板
+│   │   ├── auth/          # 认证相关API
+│   │   │   ├── login.ts    # 登录接口
+│   │   │   ├── register.ts # 注册接口
+│   │   │   ├── refresh.ts  # 刷新Token
+│   │   │   ├── logout.ts   # 退出登录
+│   │   │   ├── users.ts    # 用户管理（需超级管理员权限）
+│   │   │   ├── reset-password.ts      # 用户重置密码
+│   │   │   └── admin-reset-password.ts # 管理员重置用户密码
+│   │   ├── entry_list/     # 入职名单相关API
 │   │   ├── entry_list.ts      # 入职名单CRUD
 │   │   └── import_errors.ts   # 导入错误日志
 │   ├── entry_list.tsx     # 入职名单页面
-│   ├── import_errors.tsx  # 导入错误日志页面
+│   ├── import_errors.tsx  # 错误日志页面
+│   ├── admin/users.tsx    # 用户管理页面（仅超级管理员）
+│   ├── reset-password.tsx # 重置密码页面
 │   ├── index.tsx          # 首页
 │   └── login.tsx          # 登录页
 ├── styles/            # 样式文件
 ├── data/              # 数据库文件目录
 │   └── employee_data.db
+├── middleware.ts      # 路由中间件（认证保护）
 └── package.json
 ```
 
-## 前后端架构
+## 认证机制
 
-这是一个基于 **Next.js** 的全栈项目，采用 **前后端一体化** 架构。
-
-### 架构图
+### JWT + Refresh Token 流程
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     浏览器 (Browser)                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│  │  页面组件    │  │  API调用    │  │  状态管理        │  │
-│  │  React     │  │  fetch()    │  │  useState       │  │
-│  └──────┬──────┘  └──────┬──────┘  └─────────────────┘  │
-└─────────┼────────────────┼────────────────────────────────┘
-          │                │
-          │ HTTP Request   │ HTTP Response (JSON)
-          ▼                ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Next.js 服务器                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │              API Routes (后端)                    │    │
-│  │  pages/api/entry_list.ts    - 增删改查           │    │
-│  │  pages/api/entry_list/import.ts - Excel导入       │    │
-│  │  pages/api/entry_list/export.ts - Excel导出       │    │
-│  │  pages/api/import_errors.ts  - 错误日志           │    │
-│  └──────────────────────┬──────────────────────────┘    │
-│                         │                                │
-│  ┌──────────────────────▼──────────────────────────┐    │
-│  │              lib/db.ts (数据库层)               │    │
-│  │  - SQLite 连接管理                               │    │
-│  │  - 表结构初始化                                  │    │
-│  │  - 数据模型定义                                  │    │
-│  └──────────────────────┬──────────────────────────┘    │
-└─────────────────────────┼────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              SQLite 数据库 (data/employee_data.db)       │
-│  ┌─────────────────┐    ┌─────────────────────────┐    │
-│  │   entry_list   │    │    import_errors       │    │
-│  │   入职名单表     │    │    导入错误日志表        │    │
-│  └─────────────────┘    └─────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ 登录流程                                                    │
+├─────────────────────────────────────────────────────────────┤
+│ 1. 用户提交登录表单                                         │
+│ 2. 后端验证用户凭据                                         │
+│ 3. 生成 accessToken (15分钟) 和 refreshToken (7天)         │
+│ 4. 通过 Set-Cookie 设置 HttpOnly cookies                   │
+│ 5. 检查是否为初始密码（123456），返回 needResetPassword     │
+│ 6. 如需重置密码，跳转到重置密码页面                         │
+│ 7. 前端存储到 localStorage 和 Zustand store                │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ 请求流程                                                    │
+├─────────────────────────────────────────────────────────────┤
+│ 1. 前端请求时自动携带 Authorization: Bearer <token>         │
+│ 2. Middleware 验证 accessToken                             │
+│ 3. Token 有效 → 允许访问                                   │
+│ 4. Token 过期 → 返回 401                                   │
+│ 5. Axios 拦截器自动调用 refresh 接口                       │
+│ 6. 获取新的 accessToken 并重试请求                          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 前端工作流程
+### 路由保护
 
-以"入职名单"页面为例：
+通过 `middleware.ts` 实现路由保护：
 
-```typescript
-// 1. 页面加载时，自动获取数据
-useEffect(() => {
-  fetchData()  // 调用API获取数据
-}, [])
+- **公开路由**: `/login`, `/register`, `/reset-password`
+- **受保护路由**: `/entry_list`, `/import_errors`, `/admin/users`, `/`
+- **仅超级管理员**: `/admin/users`
 
-// 2. 用户搜索时，调用API过滤数据
-const handleSearch = (values) => {
-  fetchData(values)  // 传递搜索参数到API
-}
+未登录用户访问受保护路由会自动重定向到登录页。
 
-// 3. 用户新增/编辑/删除后，重新获取数据
-const handleAddUser = async (values) => {
-  await fetch('/api/entry_list', {
-    method: 'POST',
-    body: JSON.stringify(values)
-  })
-  fetchData()  // 刷新列表
-}
-```
+## 角色权限说明
 
-### 后端工作流程 (API Routes)
-
-```typescript
-// pages/api/entry_list.ts
-export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    // 查询数据
-    const db = getDB()
-    const entries = db.prepare('SELECT * FROM entry_list').all()
-    res.json(entries)  // 返回JSON给前端
-  }
-  else if (req.method === 'POST') {
-    // 新增数据
-    const db = getDB()
-    const stmt = db.prepare('INSERT INTO entry_list ...')
-    stmt.run(...)
-    res.json({ success: true })
-  }
-}
-```
-
-### 数据流向示例
-
-**场景：用户导入 Excel 文件**
-
-```
-1. 用户点击"导入"按钮，选择 Excel 文件
-
-2. 前端 (entry_list.tsx):
-   const handleImport = async (file) => {
-     const formData = new FormData()
-     formData.append('file', file)
-
-     await fetch('/api/entry_list/import', {
-       method: 'POST',
-       body: formData
-     })
-   }
-
-3. 后端 (api/entry_list/import.ts):
-   - 解析 Excel 文件
-   - 验证每行数据
-   - 正确的数据插入 entry_list 表
-   - 错误的数据插入 import_errors 表
-   - 返回导入结果
-
-4. 前端收到结果:
-   - 显示成功/失败提示
-   - 重新获取列表数据
-   - 刷新页面显示最新数据
-```
+| 权限 | 超级管理员 | 管理员 | 普通用户 |
+|------|-----------|--------|---------|
+| 查看入职名单 | ✓ | ✓ | ✓ |
+| 添加/编辑员工 | ✓ | ✓ | ✓ |
+| 导入数据 | ✓ | ✓ | ✓ |
+| 导出数据 | ✓ | ✓ | ✗ |
+| 权限管理页面 | ✓ | ✗ | ✗ |
+| 创建账号 | ✓ | ✗ | ✗ |
+| 修改角色 | ✓ | ✗ | ✗ |
+| 删除账号 | ✓ | ✗ | ✗ |
+| 重置密码 | ✓ | ✗ | ✗ |
 
 ## API 接口
 
+### 认证接口
+
 | 接口 | 方法 | 功能 |
 |------|------|------|
-| `/api/entry_list` | GET | 获取入职名单列表 |
-| `/api/entry_list` | POST | 新增员工 |
-| `/api/entry_list` | PUT | 编辑员工 |
-| `/api/entry_list` | DELETE | 删除员工 |
-| `/api/entry_list/import` | POST | 导入 Excel |
-| `/api/entry_list/export` | GET | 导出 Excel |
+| `/api/auth/login` | POST | 用户登录 |
+| `/api/auth/register` | POST | 用户注册 |
+| `/api/auth/refresh` | POST | 刷新 Token |
+| `/api/auth/logout` | POST | 退出登录 |
+| `/api/auth/reset-password` | POST | 用户重置自己密码 |
+| `/api/auth/admin-reset-password` | POST | 管理员重置用户密码（需超级管理员） |
+| `/api/auth/users` | GET | 获取用户列表（需超级管理员） |
+| `/api/auth/users` | POST | 创建用户（需超级管理员） |
+| `/api/auth/users` | PUT | 更新用户角色（需超级管理员） |
+| `/api/auth/users` | DELETE | 删除用户（需超级管理员） |
+
+### 入职名单接口
+
+| 接口 | 方法 | 功能 |
+|------|------|------|
+| `/api/entry_list` | GET | 获取入职名单列表（需登录） |
+| `/api/entry_list` | POST | 新增员工（需登录） |
+| `/api/entry_list` | PUT | 编辑员工（需登录） |
+| `/api/entry_list` | DELETE | 删除员工（需登录） |
+| `/api/entry_list/import` | POST | 导入 Excel（需登录） |
+| `/api/entry_list/export` | GET | 导出 Excel（需登录） |
 | `/api/entry_list/template` | GET | 下载导入模板 |
-| `/api/entry_list/deduplicate` | POST | 数据去重 |
-| `/api/import_errors` | GET | 获取错误日志 |
-| `/api/import_errors` | DELETE | 清空错误日志 |
+| `/api/entry_list/deduplicate` | POST | 数据去重（需登录） |
+
+### 错误日志接口
+
+| 接口 | 方法 | 功能 |
+|------|------|------|
+| `/api/import_errors` | GET | 获取错误日志（需登录） |
+| `/api/import_errors` | DELETE | 清空错误日志（需登录） |
+
+### 登录请求示例
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@qq.com", "password": "123456"}'
+```
+
+### 注册请求示例
+
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "张三", "email": "zhangsan@example.com", "password": "123456"}'
+```
 
 ## 数据库
 
@@ -219,8 +222,20 @@ export default async function handler(req, res) {
 
 首次运行时会自动创建必要的表结构：
 
+- **users**: 用户表（包含 role 字段）
 - **entry_list**: 入职名单表
 - **import_errors**: 导入错误日志表
+- **refresh_tokens**: 刷新令牌存储表
+
+## 默认账号
+
+系统包含一个只读管理员账号：
+
+```
+邮箱: admin@qq.com
+密码: 123456
+角色: 超级管理员（只读，不可删除和重置密码）
+```
 
 ## 局域网部署
 
@@ -264,9 +279,28 @@ pm2 stop hr-system
 
 ## 使用说明
 
-1. 访问系统后进入入职名单页面
-2. 可通过 Excel 文件导入员工数据
-3. 支持按姓名、电话、身份证号码搜索
-4. 导入失败的数据会记录在错误日志中
-5. 可使用去重功能处理重复数据
-6. 支持自定义每页显示条数（10/20/50/100）
+1. **访问登录页面** - 打开 http://localhost:3000/login
+2. **登录系统** - 使用邮箱和密码登录
+3. **首次登录** - 如使用初始密码（123456），会跳转到重置密码页面
+4. **管理入职名单** - 登录后进入入职名单页面
+5. **导入数据** - 点击导入按钮选择 Excel 文件
+6. **搜索数据** - 使用搜索框按姓名、电话或身份证号码搜索
+7. **查看错误日志** - 点击侧边栏"错误日志"查看导入错误
+8. **权限管理** - 超级管理员可管理用户账号（仅超级管理员可见）
+9. **退出登录** - 点击左侧侧边栏底部的"退出登录"按钮
+
+## 安全特性
+
+- ✅ JWT Token 认证
+- ✅ HttpOnly Cookies（防止 XSS 攻击）
+- ✅ 密码加密存储（bcrypt）
+- ✅ 路由级别的访问控制
+- ✅ 接口级别的登录验证
+- ✅ Token 过期自动刷新
+- ✅ 初始密码强制修改
+- ✅ 角色权限分级控制
+- ✅ 只读账号保护
+
+## 许可证
+
+MIT License

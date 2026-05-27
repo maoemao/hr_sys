@@ -14,7 +14,6 @@ export default function ImportErrorsPage() {
 
   useEffect(() => {
     fetchErrors()
-    message.info('页面加载完成')
   }, [])
 
   const fetchErrors = async () => {
@@ -26,14 +25,12 @@ export default function ImportErrorsPage() {
   }
 
   const handleDelete = async (id: number) => {
-    console.log('Delete button clicked, id:', id)
     try {
       const res = await fetch('/api/import_errors', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       })
-      console.log('Delete response:', res)
       if (res.ok) {
         message.success('删除成功')
         fetchErrors()
@@ -41,25 +38,21 @@ export default function ImportErrorsPage() {
         message.error('删除失败')
       }
     } catch (error) {
-      console.error('Delete error:', error)
       message.error('删除失败')
     }
   }
 
   const handleClearAll = () => {
-    console.log('Clear all button clicked, showing confirm modal')
     setConfirmModalVisible(true)
   }
 
   const handleConfirmClear = async () => {
     try {
-      console.log('Confirmed, sending DELETE request')
       const res = await fetch('/api/import_errors', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       })
-      console.log('DELETE response status:', res.status)
       if (res.ok) {
         message.success('清空成功')
         fetchErrors()
@@ -67,7 +60,6 @@ export default function ImportErrorsPage() {
         message.error('清空失败')
       }
     } catch (error) {
-      console.error('Clear all error:', error)
       message.error('清空失败')
     } finally {
       setConfirmModalVisible(false)
@@ -131,10 +123,7 @@ export default function ImportErrorsPage() {
             danger
             size="small"
             icon={<DeleteOutlined />}
-            onClick={() => {
-              console.log('Delete button clicked for record:', record.id)
-              handleDelete(record.id)
-            }}
+            onClick={() => handleDelete(record.id)}
           >
             删除
           </Button>
@@ -148,7 +137,7 @@ export default function ImportErrorsPage() {
       <Sidebar />
       <div style={{ flex: 1, padding: 24, background: '#f0f2f5', overflow: 'auto' }}>
         <Card
-          title="导入错误日志"
+          title="错误日志"
           extra={
             <Space>
               <Button icon={<ReloadOutlined />} onClick={fetchErrors}>
@@ -169,9 +158,9 @@ export default function ImportErrorsPage() {
             dataSource={errors}
             rowKey="id"
             loading={loading}
-            pagination={{ 
-              pageSize: pageSize, 
-              showSizeChanger: true, 
+            pagination={{
+              pageSize: pageSize,
+              showSizeChanger: true,
               showTotal: (total) => `共 ${total} 条`,
               pageSizeOptions: ['10', '20', '50', '100'],
               onShowSizeChange: (_, size) => {
@@ -209,10 +198,10 @@ export default function ImportErrorsPage() {
             </div>
             <div>
               <strong>原始数据：</strong>
-              <pre style={{ 
-                marginTop: 8, 
-                padding: 12, 
-                background: '#f5f5f5', 
+              <pre style={{
+                marginTop: 8,
+                padding: 12,
+                background: '#f5f5f5',
                 borderRadius: 4,
                 maxHeight: 350,
                 overflowY: 'auto',

@@ -8,18 +8,26 @@
     "start": "next start -H 0.0.0.0 -p 3000"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.5.0",
-    "antd": "^5.22.0",
-    "better-sqlite3": "^11.7.0",
+    "@ant-design/icons": "^6.2.3",
+    "@tanstack/react-query": "^5.100.14",
+    "antd": "^6.4.3",
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
     "dayjs": "^1.11.13",
+    "jsonwebtoken": "^9.0.3",
+    "jwt-decode": "^4.0.0",
     "next": "16.1.4",
     "node-schedule": "^2.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.0.0",
     "@types/node-schedule": "^2.1.7",
     "@types/react": "^19.0.0",

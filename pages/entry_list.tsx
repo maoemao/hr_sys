@@ -3,6 +3,7 @@ import { Table, Input, Button, Space, Card, Form, Modal, message, Upload } from 
 import { SearchOutlined, ReloadOutlined, PlusOutlined, EditOutlined, UploadOutlined, DownloadOutlined, FileExcelOutlined, DeleteOutlined } from '@ant-design/icons'
 import Sidebar from '../components/Sidebar'
 import { EntryList } from '../lib/db'
+import { useAuthStore } from '@/store/authStore'
 
 export default function EntryListPage() {
   const [entries, setEntries] = useState<EntryList[]>([])
@@ -18,6 +19,7 @@ export default function EntryListPage() {
   const [pageSize, setPageSize] = useState(10)
 
   const searchFormRef = useRef<any>(null)
+  const canExport = useAuthStore((state) => state.canExport)
 
   useEffect(() => {
     fetchData()
@@ -283,14 +285,16 @@ export default function EntryListPage() {
                 一键去重
               </Button>
             </Space>
-            <Space>
-              <Button icon={<DownloadOutlined />} onClick={handleExportTemplate}>
-                导出模版
-              </Button>
-              <Button type="primary" icon={<FileExcelOutlined />} onClick={handleExport}>
-                导出数据
-              </Button>
-            </Space>
+            {canExport() && (
+              <Space>
+                <Button icon={<DownloadOutlined />} onClick={handleExportTemplate}>
+                  导出模版
+                </Button>
+                <Button type="primary" icon={<FileExcelOutlined />} onClick={handleExport}>
+                  导出数据
+                </Button>
+              </Space>
+            )}
           </div>
 
           <Table

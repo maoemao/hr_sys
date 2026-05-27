@@ -1,11 +1,47 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getDB, EntryList } from '../../lib/db'
 import * as XLSX from 'xlsx'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+
+// 验证登录态的中间件函数
+function authenticate(req: NextApiRequest): boolean {
+  // 从 Authorization header 获取 token
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7)
+    try {
+      jwt.verify(token, JWT_SECRET)
+      return true
+    } catch {
+      return false
+    }
+  }
+  
+  // 从 cookies 获取 token
+  const cookies = req.cookies
+  if (cookies && cookies.accessToken) {
+    try {
+      jwt.verify(cookies.accessToken, JWT_SECRET)
+      return true
+    } catch {
+      return false
+    }
+  }
+  
+  return false
+}
 
 export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<EntryList[] | { message: string } | Buffer>
 ) {
+  // 验证登录态
+  if (!authenticate(req)) {
+    return res.status(401).json({ message: '未登录，请先登录' })
+  }
+
   const db = getDB()
 
   if (req.method === 'POST') {

@@ -1,19 +1,35 @@
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import { LockOutlined, MailOutlined } from '@ant-design/icons'
+import { useAuthStore } from '@/store/authStore'
+import axios from '@/lib/axios'
 
 export default function Login() {
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const login = useAuthStore((state) => state.login)
 
-  const onFinish = (values: { email: string; password: string }) => {
+  const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true)
-    if (values.password === '123456') {
+    try {
+      const response = await axios.post('/auth/login', values)
+      const { accessToken, refreshToken, user, needResetPassword } = response.data
+
+      login(accessToken, refreshToken, user)
       message.success('登录成功')
-      router.push('/entry_list')
-    } else {
-      message.error('密码错误，请输入正确密码')
+
+      setTimeout(() => {
+        if (needResetPassword) {
+          window.location.href = '/reset-password'
+        } else {
+          window.location.href = '/entry_list'
+        }
+      }, 200)
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message ||
+                          error.message ||
+                          '登录失败，请稍后重试'
+      message.error(errorMessage)
+    } finally {
       setLoading(false)
     }
   }
@@ -36,8 +52,8 @@ export default function Login() {
           layout="vertical"
           size="large"
           initialValues={{
-            email: 'tony@qq.com',
-            password: '123456'
+            email: '',
+            password: ''
           }}
         >
           <Form.Item
@@ -74,9 +90,6 @@ export default function Login() {
             </Button>
           </Form.Item>
         </Form>
-        <div style={{ textAlign: 'center', color: '#999', fontSize: '12px' }}>
-          默认密码：123456
-        </div>
       </Card>
     </div>
   )
