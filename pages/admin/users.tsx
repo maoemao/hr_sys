@@ -21,6 +21,11 @@ const roleOptions: { value: UserRole; label: string }[] = [
   { value: 'user', label: '普通用户' }
 ]
 
+const createRoleOptions: { value: UserRole; label: string }[] = [
+  { value: 'admin', label: '管理员' },
+  { value: 'user', label: '普通用户' }
+]
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
@@ -255,7 +260,7 @@ export default function UserManagement() {
               rules={[{ required: true, message: '请选择角色' }]}
             >
               <Select placeholder="请选择角色">
-                {roleOptions.map(option => (
+                {(editingUser ? roleOptions : createRoleOptions).map(option => (
                   <Option key={option.value} value={option.value}>
                     {option.label}
                   </Option>

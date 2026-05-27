@@ -136,14 +136,14 @@ export default function EntryListPage() {
 
   const handleExport = async () => {
     const values = searchFormRef.current?.getFieldsValue() || {}
-    
+
     try {
       const res = await fetch('/api/entry_list/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values)
       })
-      
+
       if (!res.ok) {
         message.error('导出失败')
         return
@@ -174,13 +174,13 @@ export default function EntryListPage() {
     reader.onload = async (e) => {
       try {
         const base64 = (e.target?.result as string)?.split(',')[1] || ''
-        
+
         const res = await fetch('/api/entry_list/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileContent: base64, fileName: file.name })
         })
-        
+
         const data = await res.json()
         if (res.ok) {
           let msg = `${data.message}，成功: ${data.success}条`
@@ -284,12 +284,12 @@ export default function EntryListPage() {
               <Button danger icon={<DeleteOutlined />} onClick={handleDeduplicate}>
                 一键去重
               </Button>
+              <Button icon={<DownloadOutlined />} onClick={handleExportTemplate}>
+                导出模版
+              </Button>
             </Space>
             {canExport() && (
               <Space>
-                <Button icon={<DownloadOutlined />} onClick={handleExportTemplate}>
-                  导出模版
-                </Button>
                 <Button type="primary" icon={<FileExcelOutlined />} onClick={handleExport}>
                   导出数据
                 </Button>
@@ -303,9 +303,9 @@ export default function EntryListPage() {
             rowKey="id"
             loading={loading}
             scroll={{ x: 1200 }}
-            pagination={{ 
-              pageSize: pageSize, 
-              showSizeChanger: true, 
+            pagination={{
+              pageSize: pageSize,
+              showSizeChanger: true,
               showTotal: (total) => `共 ${total} 条`,
               pageSizeOptions: ['10', '20', '50', '100'],
               onShowSizeChange: (_, size) => {
