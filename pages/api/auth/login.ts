@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { getUserByEmail, saveRefreshToken } from '@/lib/db'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-const JWT_EXPIRES_IN = '15m'
+const JWT_EXPIRES_IN = '8h'
 const REFRESH_TOKEN_EXPIRES_IN = '7d'
 
 const DEFAULT_PASSWORD = '123456'

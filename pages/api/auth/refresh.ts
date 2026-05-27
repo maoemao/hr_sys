@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import { getRefreshToken, saveRefreshToken, getUserById } from '@/lib/db'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-const JWT_EXPIRES_IN = '15m'
+const JWT_EXPIRES_IN = '8h'
 const REFRESH_TOKEN_EXPIRES_IN = '7d'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
